@@ -12,7 +12,9 @@ import 'screens/admin/admin_home.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await NotificationService().initialize();
+  try {
+    await NotificationService().initialize();
+  } catch (_) {}
   runApp(const BloodConnectApp());
 }
 
@@ -35,7 +37,6 @@ class BloodConnectApp extends StatelessWidget {
 
 class AppRouter extends StatefulWidget {
   const AppRouter({super.key});
-
   @override
   State<AppRouter> createState() => _AppRouterState();
 }
@@ -89,8 +90,7 @@ class SplashScreen extends StatelessWidget {
             const SizedBox(height: 24),
             Text('BloodConnect', style: Theme.of(context).textTheme.displayLarge?.copyWith(color: Colors.white)),
             const SizedBox(height: 8),
-            Text('Every drop counts. Every life matters.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70)),
+            Text('Every drop counts. Every life matters.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70)),
             const SizedBox(height: 48),
             const CircularProgressIndicator(color: Colors.white54, strokeWidth: 2),
           ]),
