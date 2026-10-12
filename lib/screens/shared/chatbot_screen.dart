@@ -93,7 +93,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 label: Text(ChatbotService.quickReplies[i], style: const TextStyle(fontSize: 12)),
                 onPressed: () => _sendMessage(ChatbotService.quickReplies[i]),
                 backgroundColor: AppTheme.softPink,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: AppTheme.primaryRed.withOpacity(0.3))),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: AppTheme.primaryRed.withValues(alpha: 0.3))),
               ),
             ),
           ),
@@ -127,7 +127,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             IconButton(
               onPressed: _isTyping ? null : () => _sendMessage(_textCtrl.text),
               icon: Icon(Icons.send_rounded, color: _isTyping ? Colors.grey : AppTheme.primaryRed),
-              style: IconButton.styleFrom(backgroundColor: _isTyping ? Colors.grey.shade200 : AppTheme.primaryRed.withOpacity(0.1), padding: const EdgeInsets.all(12)),
+              style: IconButton.styleFrom(backgroundColor: _isTyping ? Colors.grey.shade200 : AppTheme.primaryRed.withValues(alpha: 0.1), padding: const EdgeInsets.all(12)),
             ),
           ]),
         ),
@@ -162,7 +162,7 @@ class _MessageBubble extends StatelessWidget {
                 bottomLeft: Radius.circular(isUser ? 18 : 4),
                 bottomRight: Radius.circular(isUser ? 4 : 18),
               ),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 4, offset: const Offset(0, 2))],
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 4, offset: const Offset(0, 2))],
             ),
             child: Text(message.content, style: GoogleFonts.poppins(fontSize: 14, color: isUser ? Colors.white : Colors.black87, height: 1.5)),
           )),
@@ -199,13 +199,13 @@ class _TypingIndicatorState extends State<_TypingIndicator> with SingleTickerPro
         const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 4)]),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 4)]),
           child: AnimatedBuilder(
             animation: _ctrl,
             builder: (_, __) => Row(mainAxisSize: MainAxisSize.min, children: List.generate(3, (i) {
               final opacity = (0.3 + 0.7 * (((_ctrl.value + i/3) % 1.0 > 0.5) ? 1 - (_ctrl.value + i/3) % 1.0 : (_ctrl.value + i/3) % 1.0)).clamp(0.3, 1.0);
               return Container(margin: const EdgeInsets.symmetric(horizontal: 2), width: 8, height: 8,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: AppTheme.primaryRed.withOpacity(opacity)));
+                decoration: BoxDecoration(shape: BoxShape.circle, color: AppTheme.primaryRed.withValues(alpha: opacity)));
             })),
           ),
         ),

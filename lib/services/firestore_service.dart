@@ -9,12 +9,25 @@ class FirestoreService {
     return doc.id;
   }
 
+  Future<void> updateBloodRequest(BloodRequestModel request) async {
+    await _db.collection('blood_requests').doc(request.id).update(request.toMap());
+  }
+
+  Future<void> deleteBloodRequest(String requestId) async {
+    await _db.collection('blood_requests').doc(requestId).delete();
+  }
+
   Stream<List<BloodRequestModel>> getOpenBloodRequests() {
     return _db.collection('blood_requests')
         .where('status', isEqualTo: 'open')
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snap) => snap.docs.map(BloodRequestModel.fromFirestore).toList());
+        .map((snap) => snap.docs.map(BloodRequestModel.fromFirestore).where((req) {
+          if (req.requiredBy == null) return true;
+          final today = DateTime.now();
+          final startOfToday = DateTime(today.year, today.month, today.day);
+          return !req.requiredBy!.isBefore(startOfToday);
+        }).toList());
   }
 
   Stream<List<BloodRequestModel>> getAllBloodRequests() {
@@ -31,11 +44,76 @@ class FirestoreService {
         .where('bloodType', whereIn: compatible)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snap) => snap.docs.map(BloodRequestModel.fromFirestore).toList());
+        .map((snap) => snap.docs.map(BloodRequestModel.fromFirestore).where((req) {
+          if (req.requiredBy == null) return true;
+          final today = DateTime.now();
+          final startOfToday = DateTime(today.year, today.month, today.day);
+          return !req.requiredBy!.isBefore(startOfToday);
+        }).toList());
   }
+
+  Stream<bool> hasActiveRequest(String donorId) {
+    return _db.collection('blood_requests')
+        .where('status', isEqualTo: 'open')
+        .where('respondedDonors', arrayContains: donorId)
+        .snapshots()
+        .map((snap) => snap.docs.isNotEmpty);
+  }
+  Future<void> markDonationCompleted(String requestId, String donorId) async {
+    final batch = _db.batch();
+    
+    // Update Blood Request
+    final requestRef = _db.collection('blood_requests').doc(requestId);
+    final requestDoc = await requestRef.get();
+    if (!requestDoc.exists) return;
+    
+    final request = BloodRequestModel.fromFirestore(requestDoc);
+    final completed = List<String>.from(request.completedDonors);
+    
+    if (!completed.contains(donorId)) {
+      completed.add(donorId);
+      final updateData = <String, dynamic>{
+        'completedDonors': FieldValue.arrayUnion([donorId]),
+      };
+      
+      // If we reached the goal, mark as fulfilled
+      if (completed.length >= request.unitsNeeded) {
+        updateData['status'] = 'fulfilled';
+      }
+      
+      batch.update(requestRef, updateData);
+    }
+    
+    // Update Donor's lastDonationDate
+    final userRef = _db.collection('users').doc(donorId);
+    batch.update(userRef, {
+      'lastDonationDate': FieldValue.serverTimestamp(),
+    });
+    
+    await batch.commit();
+  }
+
 
   Future<void> respondToRequest(String requestId, String donorId, bool accept) async {
     if (accept) {
+      final activeRequests = await _db
+          .collection('blood_requests')
+          .where('status', isEqualTo: 'open')
+          .where('respondedDonors', arrayContains: donorId)
+          .get();
+      if (activeRequests.docs.isNotEmpty) {
+        throw Exception('You have already accepted an active blood request.');
+      }
+      final requestDoc = await _db.collection('blood_requests').doc(requestId).get();
+      if (requestDoc.exists) {
+        final d = requestDoc.data()!;
+        final unitsNeeded = d['unitsNeeded'] ?? 1;
+        final responded = List<String>.from(d['respondedDonors'] ?? []);
+        if (responded.length >= unitsNeeded) {
+          throw Exception('This request has already reached the required number of donors.');
+        }
+      }
+
       await _db.collection('blood_requests').doc(requestId).update({
         'respondedDonors': FieldValue.arrayUnion([donorId]),
       });
@@ -55,6 +133,51 @@ class FirestoreService {
       'O-': ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
     };
     return compatibility[donorType] ?? [donorType];
+  }
+
+  Future<void> completeAppointmentDonation(String appointmentId, String donorId) async {
+    final batch = _db.batch();
+    
+    // 1. Fetch user to get bloodType
+    final userDoc = await _db.collection('users').doc(donorId).get();
+    if (!userDoc.exists) return;
+    final user = UserModel.fromFirestore(userDoc);
+    
+    // 2. Fetch appointment
+    final aptRef = _db.collection('appointments').doc(appointmentId);
+    final aptDoc = await aptRef.get();
+    if (!aptDoc.exists) return;
+    final apt = AppointmentModel.fromFirestore(aptDoc);
+    
+    final completed = List<String>.from(apt.completedDonors);
+    if (!completed.contains(donorId)) {
+      completed.add(donorId);
+      
+      // Update Appointment completedDonors
+      batch.update(aptRef, {
+        'completedDonors': FieldValue.arrayUnion([donorId]),
+      });
+      
+      // Update User lastDonationDate
+      batch.update(userDoc.reference, {
+        'lastDonationDate': FieldValue.serverTimestamp(),
+      });
+      
+      // Add to inventory
+      final invRef = _db.collection('blood_inventory').doc();
+      final now = DateTime.now();
+      final inventoryModel = BloodInventoryModel(
+        id: invRef.id,
+        bloodType: user.bloodType,
+        units: 1,
+        collectedAt: now,
+        expiresAt: now.add(const Duration(days: 42)),
+        status: 'available',
+      );
+      batch.set(invRef, inventoryModel.toMap());
+      
+      await batch.commit();
+    }
   }
 
   Future<String> createAppointment(AppointmentModel apt) async {

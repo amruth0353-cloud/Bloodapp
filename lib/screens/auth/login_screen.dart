@@ -64,13 +64,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 Column(children: [
                   Container(
                     padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), shape: BoxShape.circle),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), shape: BoxShape.circle),
                     child: const Icon(Icons.water_drop, color: Colors.white, size: 64),
                   ),
                   const SizedBox(height: 16),
                   Text('BloodConnect', style: GoogleFonts.playfairDisplay(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  Text('Every drop counts. Every life matters.', style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.85), fontSize: 14)),
+                  Text('Every drop counts. Every life matters.', style: GoogleFonts.poppins(color: Colors.white.withValues(alpha: 0.85), fontSize: 14)),
                 ]).animate().fadeIn(duration: 600.ms).scale(),
                 const SizedBox(height: 40),
                 Card(

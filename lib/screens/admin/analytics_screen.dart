@@ -55,9 +55,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                         Text('Blood Requests by Status', style: Theme.of(context).textTheme.titleLarge),
                         Text('${requests.length} total requests', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade500)),
                         const SizedBox(height: 16),
-                        ...[('Open', sc['open']??0, AppTheme.primaryRed), ('Fulfilled', sc['fulfilled']??0, AppTheme.successGreen), ('Cancelled', sc['cancelled']??0, Colors.grey)].map((item) =>
+                        ...[('Open', sc['open']??0, AppTheme.primaryRed), ('Fulfilled Requests', sc['fulfilled']??0, AppTheme.successGreen), ('Cancelled', sc['cancelled']??0, Colors.grey)].map((item) =>
                           Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: Row(children: [
-                            SizedBox(width: 80, child: Text(item.$1, style: const TextStyle(fontWeight: FontWeight.w500))),
+                            SizedBox(width: 125, child: Text(item.$1, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13))),
                             Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: requests.isNotEmpty ? item.$2/requests.length : 0, backgroundColor: Colors.grey.shade200, valueColor: AlwaysStoppedAnimation(item.$3), minHeight: 12))),
                             const SizedBox(width: 8),
                             Text('${item.$2}', style: TextStyle(fontWeight: FontWeight.bold, color: item.$3)),

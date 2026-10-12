@@ -16,7 +16,7 @@ class DonorHistoryScreen extends StatelessWidget {
     return Scaffold(
       appBar: BloodConnectAppBar(title: 'Donation History', showBack: false),
       body: SingleChildScrollView(child: Column(children: [
-        StreamBuilder(stream: FirestoreService().watchDonorEligibility(user.uid), builder: (ctx, snap) => EligibilityCard(eligibility: snap.data)),
+        EligibilityCard(user: user),
         StreamBuilder(
           stream: FirestoreService().getDonorHistory(user.uid),
           builder: (ctx, snap) {
@@ -34,7 +34,7 @@ class DonorHistoryScreen extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: h.status == 'donated' ? AppTheme.successGreen.withOpacity(0.15) : Colors.grey.shade100,
+                    backgroundColor: h.status == 'donated' ? AppTheme.successGreen.withValues(alpha: 0.15) : Colors.grey.shade100,
                     child: Icon(h.status == 'donated' ? Icons.favorite : Icons.cancel_outlined, color: h.status == 'donated' ? AppTheme.successGreen : Colors.grey, size: 22),
                   ),
                   title: Text(DateFormat('dd MMM yyyy').format(h.donationDate), style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -44,7 +44,7 @@ class DonorHistoryScreen extends StatelessWidget {
                   ]),
                   trailing: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: h.status == 'donated' ? AppTheme.successGreen.withOpacity(0.1) : Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
+                    decoration: BoxDecoration(color: h.status == 'donated' ? AppTheme.successGreen.withValues(alpha: 0.1) : Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
                     child: Text(h.status == 'donated' ? 'Donated' : 'Deferred', style: TextStyle(color: h.status == 'donated' ? AppTheme.successGreen : Colors.grey, fontSize: 12, fontWeight: FontWeight.w600)),
                   ),
                   isThreeLine: true,

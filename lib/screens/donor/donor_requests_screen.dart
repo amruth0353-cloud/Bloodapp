@@ -28,11 +28,15 @@ class DonorRequestsScreen extends StatelessWidget {
               final responded = r.respondedDonors.contains(user.uid);
               return BloodRequestCard(
                 request: r, hasResponded: responded,
-                onAccept: responded ? null : () async {
-                  await FirestoreService().respondToRequest(r.id, user.uid, true);
-                  if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Thank you! The blood bank will contact you.')));
+                onAccept: responded || !user.isTimeEligible ? null : () async {
+                  try {
+                    await FirestoreService().respondToRequest(r.id, user.uid, true);
+                    if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Thank you! The blood bank will contact you.'), backgroundColor: AppTheme.successGreen));
+                  } catch (e) {
+                    if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), backgroundColor: AppTheme.primaryRed));
+                  }
                 },
-                onDecline: responded ? null : () => FirestoreService().respondToRequest(r.id, user.uid, false),
+                onDecline: responded || !user.isTimeEligible ? null : () => FirestoreService().respondToRequest(r.id, user.uid, false),
               );
             },
           );

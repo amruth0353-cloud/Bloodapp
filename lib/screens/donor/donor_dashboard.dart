@@ -6,6 +6,7 @@ import '../../services/firestore_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
 import '../auth/login_screen.dart';
+import 'notifications_screen.dart';
 
 class DonorDashboard extends StatelessWidget {
   const DonorDashboard({super.key});
@@ -22,7 +23,12 @@ class DonorDashboard extends StatelessWidget {
             backgroundColor: AppTheme.primaryRed,
             automaticallyImplyLeading: false,
             actions: [
-              IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.white), onPressed: () {}),
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined, color: Colors.white), 
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+                },
+              ),
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert, color: Colors.white),
                 onSelected: (v) async {
@@ -52,7 +58,7 @@ class DonorDashboard extends StatelessWidget {
             ),
           ),
           SliverToBoxAdapter(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            StreamBuilder(stream: FirestoreService().watchDonorEligibility(user.uid), builder: (ctx, snap) => EligibilityCard(eligibility: snap.data)),
+            EligibilityCard(user: user),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: StreamBuilder(
@@ -84,11 +90,15 @@ class DonorDashboard extends StatelessWidget {
                 return Column(children: requests.take(3).map((r) => BloodRequestCard(
                   request: r,
                   hasResponded: r.respondedDonors.contains(user.uid),
-                  onAccept: () async {
-                    await FirestoreService().respondToRequest(r.id, user.uid, true);
-                    if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Thank you! The blood bank has been notified.')));
-                  },
-                  onDecline: () => FirestoreService().respondToRequest(r.id, user.uid, false),
+                  onAccept: user.isTimeEligible ? () async {
+                    try {
+                      await FirestoreService().respondToRequest(r.id, user.uid, true);
+                      if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Thank you! The blood bank has been notified.'), backgroundColor: AppTheme.successGreen));
+                    } catch (e) {
+                      if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), backgroundColor: AppTheme.primaryRed));
+                    }
+                  } : null,
+                  onDecline: user.isTimeEligible ? () => FirestoreService().respondToRequest(r.id, user.uid, false) : null,
                 )).toList());
               },
             ),

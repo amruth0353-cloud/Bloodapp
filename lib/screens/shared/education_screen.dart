@@ -32,7 +32,7 @@ class EducationScreen extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(children: [
-                  Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: a.color.withOpacity(0.12), borderRadius: BorderRadius.circular(12)), child: Icon(a.icon, color: a.color, size: 28)),
+                  Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: a.color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)), child: Icon(a.icon, color: a.color, size: 28)),
                   const SizedBox(width: 14),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(a.title, style: Theme.of(context).textTheme.titleMedium),
@@ -77,7 +77,7 @@ class _ArticleDetailScreen extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: article.color.withOpacity(0.08), borderRadius: BorderRadius.circular(12), border: Border.all(color: article.color.withOpacity(0.2))),
+            decoration: BoxDecoration(color: article.color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12), border: Border.all(color: article.color.withValues(alpha: 0.2))),
             child: Row(children: [
               Icon(article.icon, color: article.color, size: 32),
               const SizedBox(width: 12),

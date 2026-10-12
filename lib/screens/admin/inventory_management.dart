@@ -46,7 +46,7 @@ class InventoryManagement extends StatelessWidget {
                     Text('Expires: ${DateFormat('dd MMM yyyy').format(item.expiresAt)}', style: TextStyle(color: expired ? Colors.red : Colors.grey)),
                   ]),
                   trailing: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: statusColor.withOpacity(0.12), borderRadius: BorderRadius.circular(8)),
+                    Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
                       child: Text(statusLabel, style: TextStyle(color: statusColor, fontSize: 11, fontWeight: FontWeight.w600))),
                     IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20), onPressed: () => FirestoreService().removeInventory(item.id)),
                   ]),

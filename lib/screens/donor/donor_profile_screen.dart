@@ -5,6 +5,8 @@ import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
 import '../auth/login_screen.dart';
 import '../shared/education_screen.dart';
+import 'package:intl/intl.dart';
+import '../../services/firestore_service.dart';
 
 class DonorProfileScreen extends StatelessWidget {
   const DonorProfileScreen({super.key});
@@ -38,6 +40,47 @@ class DonorProfileScreen extends StatelessWidget {
                 Text(item.$2, style: const TextStyle(fontWeight: FontWeight.w500)),
               ]))
             ),
+          ]))),
+          const SizedBox(height: 12),
+          Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Text('Donation Eligibility', style: Theme.of(context).textTheme.titleMedium),
+              StreamBuilder<bool>(
+                stream: FirestoreService().hasActiveRequest(user.uid),
+                builder: (context, snapshot) {
+                  final hasActive = snapshot.data ?? false;
+                  final isTimeEligible = user.lastDonationDate == null || DateTime.now().isAfter(user.lastDonationDate!.add(const Duration(days: 56)));
+                  final isEligible = isTimeEligible && !hasActive;
+                  
+                  final text = hasActive ? 'Currently Responding' : (isEligible ? 'Eligible' : 'Not Eligible');
+                  final color = isEligible ? AppTheme.successGreen : Colors.orange;
+
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      text,
+                      style: TextStyle(color: color, fontWeight: FontWeight.bold),
+                    ),
+                  );
+                },
+              ),
+            ]),
+            const Divider(height: 16),
+            if (user.lastDonationDate != null) ...[
+              Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Row(children: [
+                const SizedBox(width: 140, child: Text('Last Donation', style: TextStyle(color: Colors.grey, fontSize: 13))),
+                Text(DateFormat.yMMMd().format(user.lastDonationDate!), style: const TextStyle(fontWeight: FontWeight.w500)),
+              ])),
+              Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Row(children: [
+                const SizedBox(width: 140, child: Text('Next Eligible Date', style: TextStyle(color: Colors.grey, fontSize: 13))),
+                Text(DateFormat.yMMMd().format(user.lastDonationDate!.add(const Duration(days: 56))), style: const TextStyle(fontWeight: FontWeight.w500)),
+              ])),
+            ] else
+              const Padding(padding: EdgeInsets.symmetric(vertical: 4), child: Text('No previous donations recorded. You are eligible to donate!')),
           ]))),
           const SizedBox(height: 12),
           Card(child: Column(children: [

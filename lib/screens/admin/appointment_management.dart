@@ -30,13 +30,22 @@ class AppointmentManagement extends StatelessWidget {
               final isUpcoming = apt.date.isAfter(DateTime.now());
               final fillFraction = apt.maxCapacity > 0 ? apt.bookedDonors.length / apt.maxCapacity : 0.0;
               return Card(margin: const EdgeInsets.symmetric(vertical: 6), child: ListTile(
+                onTap: () => _showAppointmentDonorsSheet(context, apt),
                 leading: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                  decoration: BoxDecoration(color: isUpcoming ? AppTheme.primaryRed.withOpacity(0.1) : Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Text(DateFormat('dd').format(apt.date), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isUpcoming ? AppTheme.primaryRed : Colors.grey)),
-                    Text(DateFormat('MMM').format(apt.date), style: TextStyle(fontSize: 11, color: isUpcoming ? AppTheme.primaryRed : Colors.grey)),
-                  ]),
+                  width: 55,
+                  height: 55,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(color: isUpcoming ? AppTheme.primaryRed.withValues(alpha: 0.1) : Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
+                  child: FittedBox(
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Column(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Text(DateFormat('dd').format(apt.date), style: TextStyle(fontSize: 18, height: 1.1, fontWeight: FontWeight.bold, color: isUpcoming ? AppTheme.primaryRed : Colors.grey)),
+                        const SizedBox(height: 2),
+                        Text(DateFormat('MMM').format(apt.date), style: TextStyle(fontSize: 11, height: 1.1, color: isUpcoming ? AppTheme.primaryRed : Colors.grey)),
+                      ]),
+                    ),
+                  ),
                 ),
                 title: Text(apt.timeSlot, style: const TextStyle(fontWeight: FontWeight.w600)),
                 subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -63,6 +72,111 @@ class AppointmentManagement extends StatelessWidget {
     showModalBottomSheet(context: context, isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => const _CreateAppointmentSheet());
+  }
+  void _showAppointmentDonorsSheet(BuildContext context, AppointmentModel apt) {
+    if (apt.bookedDonors.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No donors booked yet.')));
+      return;
+    }
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => _AppointmentDonorsSheet(appointment: apt),
+    );
+  }
+}
+
+class _AppointmentDonorsSheet extends StatefulWidget {
+  final AppointmentModel appointment;
+  const _AppointmentDonorsSheet({required this.appointment});
+
+  @override
+  State<_AppointmentDonorsSheet> createState() => _AppointmentDonorsSheetState();
+}
+
+class _AppointmentDonorsSheetState extends State<_AppointmentDonorsSheet> {
+  bool _isLoading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
+          const SizedBox(height: 16),
+          Text('Booked Donors', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 16),
+          Expanded(
+            child: ListView.builder(
+              itemCount: widget.appointment.bookedDonors.length,
+              itemBuilder: (ctx, i) {
+                final donorId = widget.appointment.bookedDonors[i];
+                return FutureBuilder(
+                  future: FirestoreService().getUserById(donorId),
+                  builder: (ctx, snap) {
+                    if (snap.connectionState == ConnectionState.waiting) return const ListTile(leading: CircularProgressIndicator(), title: Text('Loading...'));
+                    final user = snap.data;
+                    if (user == null) return const ListTile(leading: Icon(Icons.person_off), title: Text('Unknown Donor'));
+                    
+                    final isCompleted = widget.appointment.completedDonors.contains(donorId);
+                    
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: BloodTypeBadge(bloodType: user.bloodType, size: 40),
+                      title: Text(user.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text('${user.phone}\n${user.email}'),
+                      isThreeLine: true,
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(icon: const Icon(Icons.call, color: AppTheme.successGreen), onPressed: () {}),
+                          if (isCompleted)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.check_circle, color: AppTheme.successGreen),
+                                  SizedBox(width: 4),
+                                  Text('Collected', style: TextStyle(color: AppTheme.successGreen, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            )
+                          else
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryRed, foregroundColor: Colors.white),
+                              onPressed: _isLoading ? null : () async {
+                                setState(() => _isLoading = true);
+                                try {
+                                  await FirestoreService().completeAppointmentDonation(widget.appointment.id, user.uid);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Blood collected and added to inventory!')));
+                                    Navigator.pop(context);
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                                  }
+                                } finally {
+                                  if (mounted) setState(() => _isLoading = false);
+                                }
+                              },
+                              child: _isLoading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('Collect Blood'),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

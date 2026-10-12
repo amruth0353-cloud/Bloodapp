@@ -12,12 +12,13 @@ class UserModel {
   final String role;
   final String? fcmToken;
   final DateTime createdAt;
+  final DateTime? lastDonationDate;
 
   const UserModel({
     required this.uid, required this.name, required this.email,
     required this.phone, required this.bloodType, required this.age,
     required this.gender, required this.role, this.fcmToken,
-    required this.createdAt,
+    required this.createdAt, this.lastDonationDate,
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -28,6 +29,7 @@ class UserModel {
       age: d['age'] ?? 0, gender: d['gender'] ?? '',
       role: d['role'] ?? 'donor', fcmToken: d['fcmToken'],
       createdAt: (d['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      lastDonationDate: (d['lastDonationDate'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -36,7 +38,11 @@ class UserModel {
     'bloodType': bloodType, 'age': age, 'gender': gender,
     'role': role, 'fcmToken': fcmToken,
     'createdAt': Timestamp.fromDate(createdAt),
+    'lastDonationDate': lastDonationDate != null ? Timestamp.fromDate(lastDonationDate!) : null,
   };
+
+  bool get isTimeEligible => lastDonationDate == null || DateTime.now().isAfter(lastDonationDate!.add(const Duration(days: 90)));
+  DateTime? get nextEligibleDate => lastDonationDate?.add(const Duration(days: 90));
 }
 
 class BloodRequestModel {
@@ -50,6 +56,7 @@ class BloodRequestModel {
   final String status;
   final List<String> respondedDonors;
   final List<String> confirmedDonors;
+  final List<String> completedDonors;
   final String notes;
   final DateTime createdAt;
   final DateTime? requiredBy;
@@ -59,7 +66,7 @@ class BloodRequestModel {
     required this.urgencyLevel, required this.hospitalName,
     required this.location, required this.adminId, required this.status,
     required this.respondedDonors, required this.confirmedDonors,
-    required this.notes, required this.createdAt, this.requiredBy,
+    this.completedDonors = const [], required this.notes, required this.createdAt, this.requiredBy,
   });
 
   factory BloodRequestModel.fromFirestore(DocumentSnapshot doc) {
@@ -73,6 +80,7 @@ class BloodRequestModel {
       status: d['status'] ?? 'open',
       respondedDonors: List<String>.from(d['respondedDonors'] ?? []),
       confirmedDonors: List<String>.from(d['confirmedDonors'] ?? []),
+      completedDonors: List<String>.from(d['completedDonors'] ?? []),
       notes: d['notes'] ?? '',
       createdAt: (d['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       requiredBy: (d['requiredBy'] as Timestamp?)?.toDate(),
@@ -84,7 +92,7 @@ class BloodRequestModel {
     'urgencyLevel': urgencyLevel, 'hospitalName': hospitalName,
     'location': location, 'adminId': adminId, 'status': status,
     'respondedDonors': respondedDonors, 'confirmedDonors': confirmedDonors,
-    'notes': notes, 'createdAt': Timestamp.fromDate(createdAt),
+    'completedDonors': completedDonors, 'notes': notes, 'createdAt': Timestamp.fromDate(createdAt),
     'requiredBy': requiredBy != null ? Timestamp.fromDate(requiredBy!) : null,
   };
 
@@ -104,13 +112,15 @@ class AppointmentModel {
   final String location;
   final int maxCapacity;
   final List<String> bookedDonors;
+  final List<String> completedDonors;
   final String adminId;
   final String status;
 
   const AppointmentModel({
     required this.id, required this.date, required this.timeSlot,
     required this.location, required this.maxCapacity,
-    required this.bookedDonors, required this.adminId, required this.status,
+    required this.bookedDonors, this.completedDonors = const [],
+    required this.adminId, required this.status,
   });
 
   factory AppointmentModel.fromFirestore(DocumentSnapshot doc) {
@@ -121,6 +131,7 @@ class AppointmentModel {
       timeSlot: d['timeSlot'] ?? '', location: d['location'] ?? '',
       maxCapacity: d['maxCapacity'] ?? 10,
       bookedDonors: List<String>.from(d['bookedDonors'] ?? []),
+      completedDonors: List<String>.from(d['completedDonors'] ?? []),
       adminId: d['adminId'] ?? '', status: d['status'] ?? 'open',
     );
   }
@@ -128,7 +139,8 @@ class AppointmentModel {
   Map<String, dynamic> toMap() => {
     'date': Timestamp.fromDate(date), 'timeSlot': timeSlot,
     'location': location, 'maxCapacity': maxCapacity,
-    'bookedDonors': bookedDonors, 'adminId': adminId, 'status': status,
+    'bookedDonors': bookedDonors, 'completedDonors': completedDonors,
+    'adminId': adminId, 'status': status,
   };
 
   int get availableSlots => maxCapacity - bookedDonors.length;

@@ -40,7 +40,7 @@ class _AdminHomeState extends State<AdminHome> {
         selectedIndex: _selectedIndex,
         onDestinationSelected: (i) => setState(() => _selectedIndex = i),
         backgroundColor: Colors.white,
-        indicatorColor: AppTheme.primaryRed.withOpacity(0.12),
+        indicatorColor: AppTheme.primaryRed.withValues(alpha: 0.12),
         destinations: _navItems.map((item) => NavigationDestination(
           icon: Icon(item.$1, color: Colors.grey.shade500),
           selectedIcon: Icon(item.$2, color: AppTheme.primaryRed),

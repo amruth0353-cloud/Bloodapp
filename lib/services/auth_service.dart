@@ -101,6 +101,10 @@ class AuthService {
     try {
       final doc = await _db.collection('users').doc(user.uid).get();
       if (!doc.exists) return null;
+      final token = await _fcm.getToken();
+      if (token != null && doc.data()?['fcmToken'] != token) {
+        await _db.collection('users').doc(user.uid).update({'fcmToken': token});
+      }
       return UserModel.fromFirestore(doc);
     } catch (_) {
       return null;

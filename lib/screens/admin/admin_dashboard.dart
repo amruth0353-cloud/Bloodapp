@@ -49,7 +49,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
             onSelected: (v) async {
               if (v == 'logout') {
                 await context.read<AppProvider>().logout();
-                if (mounted) Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen(isAdmin: true)), (_) => false);
+                if (!context.mounted) return;
+                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen(isAdmin: true)), (_) => false);
               }
             },
             itemBuilder: (_) => [const PopupMenuItem(value: 'logout', child: Row(children: [Icon(Icons.logout, size: 18, color: Colors.red), SizedBox(width: 8), Text('Logout', style: TextStyle(color: Colors.red))]))],
@@ -98,6 +99,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 StreamBuilder(
                   stream: FirestoreService().getOpenBloodRequests(),
                   builder: (ctx, snap) {
+                    if (snap.connectionState == ConnectionState.waiting) {
+                      return const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator(color: AppTheme.primaryRed)));
+                    }
+                    if (snap.hasError) {
+                      return const Center(child: Padding(padding: EdgeInsets.all(16), child: Text('Error loading requests')));
+                    }
                     final requests = (snap.data ?? []).take(3).toList();
                     if (requests.isEmpty) return const EmptyState(icon: Icons.water_drop_outlined, title: 'No Active Requests', subtitle: 'Create a blood request to notify donors.');
                     return Column(children: requests.map((r) => BloodRequestCard(request: r, isAdmin: true)).toList());

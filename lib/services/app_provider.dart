@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
+import '../services/notification_service.dart';
 
 class AppProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -98,7 +99,40 @@ class AppProvider extends ChangeNotifier {
   Future<bool> createBloodRequest(BloodRequestModel request) async {
     setLoading(true);
     try {
-      await _firestoreService.createBloodRequest(request);
+      final id = await _firestoreService.createBloodRequest(request);
+      await NotificationService().sendBloodRequestToEligibleDonors(
+        bloodType: request.bloodType,
+        requestId: id,
+        urgencyLevel: request.urgencyLevel,
+        hospitalName: request.hospitalName,
+        adminId: request.adminId,
+      );
+      return true;
+    } catch (e) {
+      setError(e.toString());
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  Future<bool> updateBloodRequest(BloodRequestModel request) async {
+    setLoading(true);
+    try {
+      await _firestoreService.updateBloodRequest(request);
+      return true;
+    } catch (e) {
+      setError(e.toString());
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  Future<bool> deleteBloodRequest(String requestId) async {
+    setLoading(true);
+    try {
+      await _firestoreService.deleteBloodRequest(requestId);
       return true;
     } catch (e) {
       setError(e.toString());

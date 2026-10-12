@@ -129,7 +129,7 @@ class _MyBookings extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 10),
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: isPast ? Colors.grey.shade200 : AppTheme.primaryRed.withOpacity(0.15),
+                  backgroundColor: isPast ? Colors.grey.shade200 : AppTheme.primaryRed.withValues(alpha: 0.15),
                   child: Icon(isPast ? Icons.check : Icons.event_available, color: isPast ? Colors.grey : AppTheme.primaryRed),
                 ),
                 title: Text(DateFormat('EEEE, dd MMM yyyy').format(apt.date), style: const TextStyle(fontWeight: FontWeight.w600)),
