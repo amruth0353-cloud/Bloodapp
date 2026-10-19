@@ -1,12 +1,20 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:google_generative_ai/google_generative_ai.dart';
 
+/// Chatbot service powered by Google Gemini (gemini-1.5-flash).
+///
+/// To get a free API key:
+/// 1. Go to https://aistudio.google.com/app/apikey
+/// 2. Click "Create API Key"
+/// 3. Replace the value of [_apiKey] below with your key.
+///
+/// The Gemini free tier supports ~60 requests/minute — more than enough
+/// for typical app usage.
 class ChatbotService {
-  static const String _apiKey = 'YOUR_ANTHROPIC_API_KEY';
-  static const String _baseUrl = 'https://api.anthropic.com/v1/messages';
+  // 🔑 Replace with your Gemini API key from https://aistudio.google.com/
+  static const String _apiKey = 'YOUR_GEMINI_API_KEY';
 
   static const String _systemPrompt = '''
-You are BloodBot, the AI assistant for BloodConnect - a blood bank management app.
+You are BloodBot, the AI assistant for BloodConnect — a blood bank management app.
 You help blood donors and blood bank administrators with:
 1. Blood donation FAQs (eligibility, process, recovery, diet)
 2. Understanding blood types and compatibility
@@ -25,44 +33,55 @@ Important rules:
 - For emergencies, direct users to call emergency services
 ''';
 
-  final List<Map<String, String>> _conversationHistory = [];
+  String _currentModel;
+  late GenerativeModel _model;
+  ChatSession? _session;
+
+  String get currentModel => _currentModel;
+
+  ChatbotService({String model = 'gemini-1.5-flash'}) : _currentModel = model {
+    _initModel();
+  }
+
+  void _initModel() {
+    _model = GenerativeModel(
+      model: _currentModel,
+      apiKey: _apiKey,
+      systemInstruction: Content.system(_systemPrompt),
+      generationConfig: GenerationConfig(maxOutputTokens: 600),
+    );
+    _session = _model.startChat();
+  }
+
+  void setModel(String model) {
+    if (_currentModel != model) {
+      _currentModel = model;
+      _initModel();
+    }
+  }
 
   Future<String> sendMessage(String userMessage) async {
-    _conversationHistory.add({'role': 'user', 'content': userMessage});
+    if (_apiKey == 'YOUR_GEMINI_API_KEY') {
+      return 'BloodBot is not configured yet. Please add a Gemini API key to chatbot_service.dart.\n\nGet a free key at: https://aistudio.google.com/app/apikey';
+    }
     try {
-      final response = await http.post(
-        Uri.parse(_baseUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': _apiKey,
-          'anthropic-version': '2023-06-01',
-        },
-        body: jsonEncode({
-          'model': 'claude-sonnet-4-20250514',
-          'max_tokens': 1024,
-          'system': _systemPrompt,
-          'messages': _conversationHistory,
-        }),
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final assistantMessage = data['content'][0]['text'] as String;
-        _conversationHistory.add({'role': 'assistant', 'content': assistantMessage});
-        if (_conversationHistory.length > 20) {
-          _conversationHistory.removeRange(0, 2);
-        }
-        return assistantMessage;
-      } else if (response.statusCode == 429) {
+      final response = await _session!.sendMessage(Content.text(userMessage));
+      return response.text ??
+          'I could not generate a response. Please try again.';
+    } on GenerativeAIException catch (e) {
+      if (e.message.contains('quota') || e.message.contains('429')) {
         return 'I am receiving too many requests right now. Please try again in a moment.';
-      } else {
-        return 'I am having trouble connecting right now. Please try again later.';
       }
-    } catch (e) {
+      return 'I am having trouble connecting right now. Please try again later.';
+    } catch (_) {
       return 'Connection error. Please check your internet connection and try again.';
     }
   }
 
-  void clearHistory() => _conversationHistory.clear();
+  /// Clears conversation history and starts a fresh chat session.
+  void clearHistory() {
+    _session = _model.startChat();
+  }
 
   static List<String> get quickReplies => [
     'Am I eligible to donate?',

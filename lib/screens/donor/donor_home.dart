@@ -41,14 +41,21 @@ class _DonorHomeState extends State<DonorHome> {
         onDestinationSelected: (i) => setState(() => _selectedIndex = i),
         backgroundColor: Colors.white,
         indicatorColor: AppTheme.primaryRed.withValues(alpha: 0.12),
-        destinations: _navItems.map((item) => NavigationDestination(
-          icon: Icon(item.$1, color: Colors.grey.shade500),
-          selectedIcon: Icon(item.$2, color: AppTheme.primaryRed),
-          label: item.$3,
-        )).toList(),
+        destinations: _navItems
+            .map(
+              (item) => NavigationDestination(
+                icon: Icon(item.$1, color: Colors.grey.shade500),
+                selectedIcon: Icon(item.$2, color: AppTheme.primaryRed),
+                label: item.$3,
+              ),
+            )
+            .toList(),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatbotScreen())),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ChatbotScreen()),
+        ),
         mini: true,
         tooltip: 'BloodBot AI',
         child: const Icon(Icons.smart_toy_outlined),

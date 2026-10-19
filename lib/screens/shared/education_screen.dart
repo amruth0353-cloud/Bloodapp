@@ -7,12 +7,42 @@ class EducationScreen extends StatelessWidget {
   const EducationScreen({super.key});
 
   static const _articles = [
-    _Article(icon: Icons.favorite_border, title: 'Who Can Donate Blood?', summary: 'Basic eligibility requirements for blood donation.', color: Color(0xFFCC1F2D)),
-    _Article(icon: Icons.restaurant_menu, title: 'What to Eat Before Donating', summary: 'Prepare your body for a successful donation.', color: Color(0xFFF57C00)),
-    _Article(icon: Icons.medical_services_outlined, title: 'The Donation Process', summary: 'Step-by-step guide to your donation visit.', color: Color(0xFF1565C0)),
-    _Article(icon: Icons.healing_outlined, title: 'Post-Donation Care', summary: 'How to recover well after donating.', color: Color(0xFF2E7D32)),
-    _Article(icon: Icons.science_outlined, title: 'Blood Type Compatibility', summary: 'Understanding who can give and receive blood.', color: Color(0xFF9C27B0)),
-    _Article(icon: Icons.info_outline, title: 'Why Blood Donation Matters', summary: 'The impact of your donation on patients.', color: Color(0xFFD84315)),
+    _Article(
+      icon: Icons.favorite_border,
+      title: 'Who Can Donate Blood?',
+      summary: 'Basic eligibility requirements for blood donation.',
+      color: Color(0xFFCC1F2D),
+    ),
+    _Article(
+      icon: Icons.restaurant_menu,
+      title: 'What to Eat Before Donating',
+      summary: 'Prepare your body for a successful donation.',
+      color: Color(0xFFF57C00),
+    ),
+    _Article(
+      icon: Icons.medical_services_outlined,
+      title: 'The Donation Process',
+      summary: 'Step-by-step guide to your donation visit.',
+      color: Color(0xFF1565C0),
+    ),
+    _Article(
+      icon: Icons.healing_outlined,
+      title: 'Post-Donation Care',
+      summary: 'How to recover well after donating.',
+      color: Color(0xFF2E7D32),
+    ),
+    _Article(
+      icon: Icons.science_outlined,
+      title: 'Blood Type Compatibility',
+      summary: 'Understanding who can give and receive blood.',
+      color: Color(0xFF9C27B0),
+    ),
+    _Article(
+      icon: Icons.info_outline,
+      title: 'Why Blood Donation Matters',
+      summary: 'The impact of your donation on patients.',
+      color: Color(0xFFD84315),
+    ),
   ];
 
   @override
@@ -25,25 +55,58 @@ class EducationScreen extends StatelessWidget {
         itemBuilder: (ctx, i) {
           final a = _articles[i];
           return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: () => Navigator.push(ctx, MaterialPageRoute(builder: (_) => _ArticleDetailScreen(article: a))),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(children: [
-                  Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: a.color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)), child: Icon(a.icon, color: a.color, size: 28)),
-                  const SizedBox(width: 14),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(a.title, style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 2),
-                    Text(a.summary, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600)),
-                  ])),
-                  const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
-                ]),
-              ),
-            ),
-          ).animate().fadeIn(delay: Duration(milliseconds: i * 60)).slideX(begin: 0.05);
+                margin: const EdgeInsets.only(bottom: 12),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () => Navigator.push(
+                    ctx,
+                    MaterialPageRoute(
+                      builder: (_) => _ArticleDetailScreen(article: a),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: a.color.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(a.icon, color: a.color, size: 28),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                a.title,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                a.summary,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: Colors.grey.shade600),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 14,
+                          color: Colors.grey,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+              .animate()
+              .fadeIn(delay: Duration(milliseconds: i * 60))
+              .slideX(begin: 0.05);
         },
       ),
     );
@@ -55,7 +118,12 @@ class _Article {
   final String title;
   final String summary;
   final Color color;
-  const _Article({required this.icon, required this.title, required this.summary, required this.color});
+  const _Article({
+    required this.icon,
+    required this.title,
+    required this.summary,
+    required this.color,
+  });
 }
 
 class _ArticleDetailScreen extends StatelessWidget {
@@ -68,26 +136,58 @@ class _ArticleDetailScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: article.color,
         foregroundColor: Colors.white,
-        title: Text(article.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
-        leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new), onPressed: () => Navigator.pop(context)),
+        title: Text(
+          article.title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: article.color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12), border: Border.all(color: article.color.withValues(alpha: 0.2))),
-            child: Row(children: [
-              Icon(article.icon, color: article.color, size: 32),
-              const SizedBox(width: 12),
-              Expanded(child: Text(article.summary, style: TextStyle(color: article.color, fontWeight: FontWeight.w500))),
-            ]),
-          ),
-          const SizedBox(height: 20),
-          Text(_getContent(article.title), style: const TextStyle(fontSize: 14, height: 1.7, color: Colors.black87)),
-          const SizedBox(height: 40),
-        ]),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: article.color.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: article.color.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                children: [
+                  Icon(article.icon, color: article.color, size: 32),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      article.summary,
+                      style: TextStyle(
+                        color: article.color,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              _getContent(article.title),
+              style: const TextStyle(
+                fontSize: 14,
+                height: 1.7,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }

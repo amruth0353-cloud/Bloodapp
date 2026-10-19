@@ -17,9 +17,24 @@ class DonorRequestsScreen extends StatelessWidget {
       body: StreamBuilder(
         stream: FirestoreService().getRequestsForBloodType(user.bloodType),
         builder: (ctx, snap) {
-          if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: AppTheme.primaryRed));
+          if (snap.connectionState == ConnectionState.waiting)
+            return const Center(
+              child: CircularProgressIndicator(color: AppTheme.primaryRed),
+            );
+          if (snap.hasError) {
+            return const Center(
+              child: Text(
+                'Could not load blood requests. Check your connection.',
+              ),
+            );
+          }
           final requests = snap.data ?? [];
-          if (requests.isEmpty) return const EmptyState(icon: Icons.water_drop_outlined, title: 'No Active Requests', subtitle: 'No blood requests matching your blood type right now.');
+          if (requests.isEmpty)
+            return const EmptyState(
+              icon: Icons.water_drop_outlined,
+              title: 'No Active Requests',
+              subtitle: 'No blood requests matching your blood type right now.',
+            );
           return ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: requests.length,
@@ -27,16 +42,45 @@ class DonorRequestsScreen extends StatelessWidget {
               final r = requests[i];
               final responded = r.respondedDonors.contains(user.uid);
               return BloodRequestCard(
-                request: r, hasResponded: responded,
-                onAccept: responded || !user.isTimeEligible ? null : () async {
-                  try {
-                    await FirestoreService().respondToRequest(r.id, user.uid, true);
-                    if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Thank you! The blood bank will contact you.'), backgroundColor: AppTheme.successGreen));
-                  } catch (e) {
-                    if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), backgroundColor: AppTheme.primaryRed));
-                  }
-                },
-                onDecline: responded || !user.isTimeEligible ? null : () => FirestoreService().respondToRequest(r.id, user.uid, false),
+                request: r,
+                hasResponded: responded,
+                onAccept: responded || !user.isTimeEligible
+                    ? null
+                    : () async {
+                        try {
+                          await FirestoreService().respondToRequest(
+                            r.id,
+                            user.uid,
+                            true,
+                          );
+                          if (ctx.mounted)
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Thank you! The blood bank will contact you.',
+                                ),
+                                backgroundColor: AppTheme.successGreen,
+                              ),
+                            );
+                        } catch (e) {
+                          if (ctx.mounted)
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  e.toString().replaceAll('Exception: ', ''),
+                                ),
+                                backgroundColor: AppTheme.primaryRed,
+                              ),
+                            );
+                        }
+                      },
+                onDecline: responded || !user.isTimeEligible
+                    ? null
+                    : () => FirestoreService().respondToRequest(
+                        r.id,
+                        user.uid,
+                        false,
+                      ),
               );
             },
           );

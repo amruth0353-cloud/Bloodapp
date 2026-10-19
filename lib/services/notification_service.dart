@@ -21,11 +21,7 @@ class NotificationService {
   AutoRefreshingAuthClient? _authClient;
 
   Future<void> initialize() async {
-    await _fcm.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    await _fcm.requestPermission(alert: true, badge: true, sound: true);
 
     // Initialize local notification channel for Android
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
@@ -39,7 +35,8 @@ class NotificationService {
 
     await _localNotifications
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(channel);
 
     const AndroidInitializationSettings initializationSettingsAndroid =
@@ -79,9 +76,12 @@ class NotificationService {
       return _authClient;
     }
     try {
-      final jsonStr = await rootBundle.loadString('assets/service_account.json');
-      final accountCredentials =
-          ServiceAccountCredentials.fromJson(jsonDecode(jsonStr));
+      final jsonStr = await rootBundle.loadString(
+        'assets/service_account.json',
+      );
+      final accountCredentials = ServiceAccountCredentials.fromJson(
+        jsonDecode(jsonStr),
+      );
       final scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
       _authClient = await clientViaServiceAccount(accountCredentials, scopes);
       return _authClient;
@@ -111,7 +111,7 @@ class NotificationService {
       for (final donorDoc in donorsSnap.docs) {
         final donorId = donorDoc.id;
         final donor = UserModel.fromFirestore(donorDoc);
-        
+
         if (!donor.isTimeEligible) continue;
 
         final fcmToken = donor.fcmToken;
@@ -123,8 +123,7 @@ class NotificationService {
             title: urgencyLevel == 'critical'
                 ? 'Critical Blood Request!'
                 : 'Blood Donation Needed',
-            body:
-                '$bloodType blood needed at $hospitalName. Can you help?',
+            body: '$bloodType blood needed at $hospitalName. Can you help?',
             type: 'blood_request',
             data: {
               'requestId': requestId,
@@ -168,20 +167,20 @@ class NotificationService {
         return;
       }
 
-      final jsonStr = await rootBundle.loadString('assets/service_account.json');
+      final jsonStr = await rootBundle.loadString(
+        'assets/service_account.json',
+      );
       final decoded = jsonDecode(jsonStr);
       final projectId = decoded['project_id'] ?? 'bloodconnect-e0c1a';
 
       final url = Uri.parse(
-          'https://fcm.googleapis.com/v1/projects/$projectId/messages:send');
+        'https://fcm.googleapis.com/v1/projects/$projectId/messages:send',
+      );
 
       final payload = {
         'message': {
           'token': token,
-          'notification': {
-            'title': title,
-            'body': body,
-          },
+          'notification': {'title': title, 'body': body},
           'data': data,
           'android': {
             'priority': 'HIGH',

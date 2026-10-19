@@ -81,19 +81,42 @@ class SplashScreen extends StatelessWidget {
           ),
         ),
         child: Center(
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), shape: BoxShape.circle),
-              child: const Icon(Icons.water_drop, color: Colors.white, size: 72),
-            ),
-            const SizedBox(height: 24),
-            Text('BloodConnect', style: Theme.of(context).textTheme.displayLarge?.copyWith(color: Colors.white)),
-            const SizedBox(height: 8),
-            Text('Every drop counts. Every life matters.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70)),
-            const SizedBox(height: 48),
-            const CircularProgressIndicator(color: Colors.white54, strokeWidth: 2),
-          ]),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.water_drop,
+                  color: Colors.white,
+                  size: 72,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'BloodConnect',
+                style: Theme.of(
+                  context,
+                ).textTheme.displayLarge?.copyWith(color: Colors.white),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Every drop counts. Every life matters.',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.white70),
+              ),
+              const SizedBox(height: 48),
+              const CircularProgressIndicator(
+                color: Colors.white54,
+                strokeWidth: 2,
+              ),
+            ],
+          ),
         ),
       ),
     );

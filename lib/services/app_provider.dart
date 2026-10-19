@@ -18,8 +18,15 @@ class AppProvider extends ChangeNotifier {
   bool get isAdmin => _currentUser?.role == 'admin';
   bool get isDonor => _currentUser?.role == 'donor';
 
-  void setLoading(bool v) { _isLoading = v; notifyListeners(); }
-  void setError(String? e) { _error = e; notifyListeners(); }
+  void setLoading(bool v) {
+    _isLoading = v;
+    notifyListeners();
+  }
+
+  void setError(String? e) {
+    _error = e;
+    notifyListeners();
+  }
 
   Future<void> loadCurrentUser() async {
     try {
@@ -31,7 +38,8 @@ class AppProvider extends ChangeNotifier {
   }
 
   Future<bool> loginDonor(String email, String password) async {
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
     try {
       _currentUser = await _authService.login(email, password);
       notifyListeners();
@@ -45,7 +53,8 @@ class AppProvider extends ChangeNotifier {
   }
 
   Future<bool> loginAdmin(String email, String password) async {
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
     try {
       _currentUser = await _authService.loginAdmin(email, password);
       notifyListeners();
@@ -59,15 +68,25 @@ class AppProvider extends ChangeNotifier {
   }
 
   Future<bool> registerDonor({
-    required String email, required String password, required String name,
-    required String phone, required String bloodType,
-    required int age, required String gender,
+    required String email,
+    required String password,
+    required String name,
+    required String phone,
+    required String bloodType,
+    required int age,
+    required String gender,
   }) async {
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
     try {
       _currentUser = await _authService.registerDonor(
-        email: email, password: password, name: name,
-        phone: phone, bloodType: bloodType, age: age, gender: gender,
+        email: email,
+        password: password,
+        name: name,
+        phone: phone,
+        bloodType: bloodType,
+        age: age,
+        gender: gender,
       );
       notifyListeners();
       return true;
@@ -94,6 +113,15 @@ class AppProvider extends ChangeNotifier {
     } finally {
       setLoading(false);
     }
+  }
+
+  /// Reload the current user from Firestore (used after profile edits).
+  Future<void> refreshCurrentUser() async {
+    if (_currentUser == null) return;
+    try {
+      _currentUser = await _firestoreService.getUserById(_currentUser!.uid);
+      notifyListeners();
+    } catch (_) {}
   }
 
   Future<bool> createBloodRequest(BloodRequestModel request) async {
@@ -143,7 +171,9 @@ class AppProvider extends ChangeNotifier {
   }
 
   String _parseFirebaseError(String error) {
-    if (error.contains('user-not-found') || error.contains('wrong-password')) {
+    if (error.contains('user-not-found') ||
+        error.contains('wrong-password') ||
+        error.contains('invalid-credential')) {
       return 'Invalid email or password.';
     } else if (error.contains('email-already-in-use')) {
       return 'This email is already registered.';
@@ -151,6 +181,10 @@ class AppProvider extends ChangeNotifier {
       return 'Password must be at least 6 characters.';
     } else if (error.contains('network-request-failed')) {
       return 'Network error. Check your internet connection.';
+    } else if (error.contains('too-many-requests')) {
+      return 'Too many attempts. Please wait a few minutes and try again.';
+    } else if (error.contains('user-disabled')) {
+      return 'This account has been disabled. Contact support.';
     } else if (error.contains('Access denied')) {
       return 'Admin access required.';
     }

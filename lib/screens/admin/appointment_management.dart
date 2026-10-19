@@ -13,75 +13,193 @@ class AppointmentManagement extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: BloodConnectAppBar(title: 'Appointments', showBack: false,
-        actions: [IconButton(icon: const Icon(Icons.add_circle_outline, color: Colors.white), onPressed: () => _showCreateSheet(context))]),
+      appBar: BloodConnectAppBar(
+        title: 'Appointments',
+        showBack: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline, color: Colors.white),
+            onPressed: () => _showCreateSheet(context),
+          ),
+        ],
+      ),
       body: StreamBuilder<List<AppointmentModel>>(
         stream: FirestoreService().getAllAppointments(),
         builder: (ctx, snap) {
-          if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: AppTheme.primaryRed));
+          if (snap.connectionState == ConnectionState.waiting)
+            return const Center(
+              child: CircularProgressIndicator(color: AppTheme.primaryRed),
+            );
+          if (snap.hasError) {
+            return const Center(
+              child: Text(
+                'Could not load appointments. Please check your connection.',
+              ),
+            );
+          }
           final appointments = snap.data ?? [];
-          if (appointments.isEmpty) return EmptyState(icon: Icons.calendar_month_outlined, title: 'No Appointments', subtitle: 'Schedule donation slots for donors to book.',
-            action: ElevatedButton.icon(onPressed: () => _showCreateSheet(context), icon: const Icon(Icons.add), label: const Text('Add Slot')));
+          if (appointments.isEmpty)
+            return EmptyState(
+              icon: Icons.calendar_month_outlined,
+              title: 'No Appointments',
+              subtitle: 'Schedule donation slots for donors to book.',
+              action: ElevatedButton.icon(
+                onPressed: () => _showCreateSheet(context),
+                icon: const Icon(Icons.add),
+                label: const Text('Add Slot'),
+              ),
+            );
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: appointments.length,
             itemBuilder: (ctx, i) {
               final apt = appointments[i];
               final isUpcoming = apt.date.isAfter(DateTime.now());
-              final fillFraction = apt.maxCapacity > 0 ? apt.bookedDonors.length / apt.maxCapacity : 0.0;
-              return Card(margin: const EdgeInsets.symmetric(vertical: 6), child: ListTile(
-                onTap: () => _showAppointmentDonorsSheet(context, apt),
-                leading: Container(
-                  width: 55,
-                  height: 55,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(color: isUpcoming ? AppTheme.primaryRed.withValues(alpha: 0.1) : Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
-                  child: FittedBox(
-                    child: Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: Column(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
-                        Text(DateFormat('dd').format(apt.date), style: TextStyle(fontSize: 18, height: 1.1, fontWeight: FontWeight.bold, color: isUpcoming ? AppTheme.primaryRed : Colors.grey)),
-                        const SizedBox(height: 2),
-                        Text(DateFormat('MMM').format(apt.date), style: TextStyle(fontSize: 11, height: 1.1, color: isUpcoming ? AppTheme.primaryRed : Colors.grey)),
-                      ]),
+              final fillFraction = apt.maxCapacity > 0
+                  ? apt.bookedDonors.length / apt.maxCapacity
+                  : 0.0;
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 6),
+                child: ListTile(
+                  onTap: () => _showAppointmentDonorsSheet(context, apt),
+                  leading: Container(
+                    width: 55,
+                    height: 55,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: isUpcoming
+                          ? AppTheme.primaryRed.withValues(alpha: 0.1)
+                          : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: FittedBox(
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              DateFormat('dd').format(apt.date),
+                              style: TextStyle(
+                                fontSize: 18,
+                                height: 1.1,
+                                fontWeight: FontWeight.bold,
+                                color: isUpcoming
+                                    ? AppTheme.primaryRed
+                                    : Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              DateFormat('MMM').format(apt.date),
+                              style: TextStyle(
+                                fontSize: 11,
+                                height: 1.1,
+                                color: isUpcoming
+                                    ? AppTheme.primaryRed
+                                    : Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
+                  title: Text(
+                    apt.timeSlot,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 14,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              apt.location,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: fillFraction,
+                                backgroundColor: Colors.grey.shade200,
+                                valueColor: AlwaysStoppedAnimation(
+                                  fillFraction > 0.9
+                                      ? AppTheme.primaryRed
+                                      : AppTheme.successGreen,
+                                ),
+                                minHeight: 6,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${apt.bookedDonors.length}/${apt.maxCapacity}',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    onPressed: () =>
+                        FirestoreService().deleteAppointment(apt.id),
+                  ),
+                  isThreeLine: true,
                 ),
-                title: Text(apt.timeSlot, style: const TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(children: [const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey), const SizedBox(width: 4), Expanded(child: Text(apt.location, style: const TextStyle(fontSize: 12)))]),
-                  const SizedBox(height: 4),
-                  Row(children: [
-                    Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: fillFraction, backgroundColor: Colors.grey.shade200, valueColor: AlwaysStoppedAnimation(fillFraction > 0.9 ? AppTheme.primaryRed : AppTheme.successGreen), minHeight: 6))),
-                    const SizedBox(width: 8),
-                    Text('${apt.bookedDonors.length}/${apt.maxCapacity}', style: const TextStyle(fontSize: 12)),
-                  ]),
-                ]),
-                trailing: IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red), onPressed: () => FirestoreService().deleteAppointment(apt.id)),
-                isThreeLine: true,
-              ));
+              );
             },
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(onPressed: () => _showCreateSheet(context), icon: const Icon(Icons.add), label: const Text('Add Slot')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showCreateSheet(context),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Slot'),
+      ),
     );
   }
 
   void _showCreateSheet(BuildContext context) {
-    showModalBottomSheet(context: context, isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (_) => const _CreateAppointmentSheet());
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => const _CreateAppointmentSheet(),
+    );
   }
+
   void _showAppointmentDonorsSheet(BuildContext context, AppointmentModel apt) {
     if (apt.bookedDonors.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No donors booked yet.')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No donors booked yet.')));
       return;
     }
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (_) => _AppointmentDonorsSheet(appointment: apt),
     );
   }
@@ -92,7 +210,8 @@ class _AppointmentDonorsSheet extends StatefulWidget {
   const _AppointmentDonorsSheet({required this.appointment});
 
   @override
-  State<_AppointmentDonorsSheet> createState() => _AppointmentDonorsSheetState();
+  State<_AppointmentDonorsSheet> createState() =>
+      _AppointmentDonorsSheetState();
 }
 
 class _AppointmentDonorsSheetState extends State<_AppointmentDonorsSheet> {
@@ -102,11 +221,22 @@ class _AppointmentDonorsSheetState extends State<_AppointmentDonorsSheet> {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(24),
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.7,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
           Text('Booked Donors', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 16),
@@ -118,53 +248,116 @@ class _AppointmentDonorsSheetState extends State<_AppointmentDonorsSheet> {
                 return FutureBuilder(
                   future: FirestoreService().getUserById(donorId),
                   builder: (ctx, snap) {
-                    if (snap.connectionState == ConnectionState.waiting) return const ListTile(leading: CircularProgressIndicator(), title: Text('Loading...'));
+                    if (snap.connectionState == ConnectionState.waiting)
+                      return const ListTile(
+                        leading: CircularProgressIndicator(),
+                        title: Text('Loading...'),
+                      );
                     final user = snap.data;
-                    if (user == null) return const ListTile(leading: Icon(Icons.person_off), title: Text('Unknown Donor'));
-                    
-                    final isCompleted = widget.appointment.completedDonors.contains(donorId);
-                    
+                    if (user == null)
+                      return const ListTile(
+                        leading: Icon(Icons.person_off),
+                        title: Text('Unknown Donor'),
+                      );
+
+                    final isCompleted = widget.appointment.completedDonors
+                        .contains(donorId);
+
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: BloodTypeBadge(bloodType: user.bloodType, size: 40),
-                      title: Text(user.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      leading: BloodTypeBadge(
+                        bloodType: user.bloodType,
+                        size: 40,
+                      ),
+                      title: Text(
+                        user.name,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       subtitle: Text('${user.phone}\n${user.email}'),
                       isThreeLine: true,
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          IconButton(icon: const Icon(Icons.call, color: AppTheme.successGreen), onPressed: () {}),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.call,
+                              color: AppTheme.successGreen,
+                            ),
+                            onPressed: () {},
+                          ),
                           if (isCompleted)
                             const Padding(
                               padding: EdgeInsets.symmetric(horizontal: 8.0),
                               child: Row(
                                 children: [
-                                  Icon(Icons.check_circle, color: AppTheme.successGreen),
+                                  Icon(
+                                    Icons.check_circle,
+                                    color: AppTheme.successGreen,
+                                  ),
                                   SizedBox(width: 4),
-                                  Text('Collected', style: TextStyle(color: AppTheme.successGreen, fontWeight: FontWeight.bold)),
+                                  Text(
+                                    'Collected',
+                                    style: TextStyle(
+                                      color: AppTheme.successGreen,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ],
                               ),
                             )
                           else
                             ElevatedButton(
-                              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryRed, foregroundColor: Colors.white),
-                              onPressed: _isLoading ? null : () async {
-                                setState(() => _isLoading = true);
-                                try {
-                                  await FirestoreService().completeAppointmentDonation(widget.appointment.id, user.uid);
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Blood collected and added to inventory!')));
-                                    Navigator.pop(context);
-                                  }
-                                } catch (e) {
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-                                  }
-                                } finally {
-                                  if (mounted) setState(() => _isLoading = false);
-                                }
-                              },
-                              child: _isLoading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('Collect Blood'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryRed,
+                                foregroundColor: Colors.white,
+                              ),
+                              onPressed: _isLoading
+                                  ? null
+                                  : () async {
+                                      setState(() => _isLoading = true);
+                                      try {
+                                        await FirestoreService()
+                                            .completeAppointmentDonation(
+                                              widget.appointment.id,
+                                              user.uid,
+                                            );
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Blood collected and added to inventory!',
+                                              ),
+                                            ),
+                                          );
+                                          Navigator.pop(context);
+                                        }
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Error: $e'),
+                                            ),
+                                          );
+                                        }
+                                      } finally {
+                                        if (mounted)
+                                          setState(() => _isLoading = false);
+                                      }
+                                    },
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text('Collect Blood'),
                             ),
                         ],
                       ),
@@ -183,7 +376,8 @@ class _AppointmentDonorsSheetState extends State<_AppointmentDonorsSheet> {
 class _CreateAppointmentSheet extends StatefulWidget {
   const _CreateAppointmentSheet();
   @override
-  State<_CreateAppointmentSheet> createState() => _CreateAppointmentSheetState();
+  State<_CreateAppointmentSheet> createState() =>
+      _CreateAppointmentSheetState();
 }
 
 class _CreateAppointmentSheetState extends State<_CreateAppointmentSheet> {
@@ -198,60 +392,197 @@ class _CreateAppointmentSheetState extends State<_CreateAppointmentSheet> {
     if (_locationCtrl.text.isEmpty) return;
     setState(() => _saving = true);
     final apt = AppointmentModel(
-      id: '', date: _selectedDate,
+      id: '',
+      date: _selectedDate,
       timeSlot: '${_startTime.format(context)} - ${_endTime.format(context)}',
-      location: _locationCtrl.text.trim(), maxCapacity: _capacity,
-      bookedDonors: [], adminId: context.read<AppProvider>().currentUser!.uid, status: 'open',
+      location: _locationCtrl.text.trim(),
+      maxCapacity: _capacity,
+      bookedDonors: [],
+      adminId: context.read<AppProvider>().currentUser!.uid,
+      status: 'open',
     );
     await FirestoreService().createAppointment(apt);
-    if (mounted) { Navigator.pop(context); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Appointment slot created'))); }
+    if (mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Appointment slot created')));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 24, right: 24, top: 16),
-      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
-        const SizedBox(height: 16),
-        Text('Add Donation Slot', style: Theme.of(context).textTheme.headlineMedium),
-        const SizedBox(height: 20),
-        InkWell(
-          onTap: () async {
-            final d = await showDatePicker(context: context, initialDate: _selectedDate, firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 90)));
-            if (d != null) setState(() => _selectedDate = d);
-          },
-          child: Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade300)),
-            child: Row(children: [const Icon(Icons.event_outlined, color: Colors.grey), const SizedBox(width: 8), Text(DateFormat('EEEE, dd MMM yyyy').format(_selectedDate), style: const TextStyle(fontWeight: FontWeight.w600))])),
-        ),
-        const SizedBox(height: 12),
-        Row(children: [
-          Expanded(child: InkWell(
-            onTap: () async { final t = await showTimePicker(context: context, initialTime: _startTime); if (t != null) setState(() => _startTime = t); },
-            child: Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade300)),
-              child: Row(children: [const Icon(Icons.access_time_outlined, color: Colors.grey, size: 18), const SizedBox(width: 8), Text(_startTime.format(context))])),
-          )),
-          const SizedBox(width: 12),
-          Expanded(child: InkWell(
-            onTap: () async { final t = await showTimePicker(context: context, initialTime: _endTime); if (t != null) setState(() => _endTime = t); },
-            child: Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade300)),
-              child: Row(children: [const Icon(Icons.access_time_filled_outlined, color: Colors.grey, size: 18), const SizedBox(width: 8), Text(_endTime.format(context))])),
-          )),
-        ]),
-        const SizedBox(height: 12),
-        TextField(controller: _locationCtrl, decoration: const InputDecoration(labelText: 'Location / Venue', prefixIcon: Icon(Icons.location_on_outlined))),
-        const SizedBox(height: 12),
-        Row(children: [
-          Text('Max Donors: ', style: Theme.of(context).textTheme.titleMedium),
-          const Spacer(),
-          IconButton(onPressed: () => setState(() => _capacity = (_capacity - 1).clamp(1, 100)), icon: const Icon(Icons.remove_circle_outline)),
-          Text('$_capacity', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          IconButton(onPressed: () => setState(() => _capacity = (_capacity + 1).clamp(1, 100)), icon: const Icon(Icons.add_circle_outline, color: AppTheme.primaryRed)),
-        ]),
-        const SizedBox(height: 20),
-        SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _saving ? null : _submit, child: Text(_saving ? 'Creating...' : 'Create Slot'))),
-        const SizedBox(height: 24),
-      ]),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 24,
+        right: 24,
+        top: 16,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Add Donation Slot',
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          const SizedBox(height: 20),
+          InkWell(
+            onTap: () async {
+              final d = await showDatePicker(
+                context: context,
+                initialDate: _selectedDate,
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(const Duration(days: 90)),
+              );
+              if (d != null) setState(() => _selectedDate = d);
+            },
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.event_outlined, color: Colors.grey),
+                  const SizedBox(width: 8),
+                  Text(
+                    DateFormat('EEEE, dd MMM yyyy').format(_selectedDate),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () async {
+                    final t = await showTimePicker(
+                      context: context,
+                      initialTime: _startTime,
+                    );
+                    if (t != null) setState(() => _startTime = t);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.access_time_outlined,
+                          color: Colors.grey,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(_startTime.format(context)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: InkWell(
+                  onTap: () async {
+                    final t = await showTimePicker(
+                      context: context,
+                      initialTime: _endTime,
+                    );
+                    if (t != null) setState(() => _endTime = t);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.access_time_filled_outlined,
+                          color: Colors.grey,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(_endTime.format(context)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _locationCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Location / Venue',
+              prefixIcon: Icon(Icons.location_on_outlined),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Text(
+                'Max Donors: ',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const Spacer(),
+              IconButton(
+                onPressed: () =>
+                    setState(() => _capacity = (_capacity - 1).clamp(1, 100)),
+                icon: const Icon(Icons.remove_circle_outline),
+              ),
+              Text(
+                '$_capacity',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                onPressed: () =>
+                    setState(() => _capacity = (_capacity + 1).clamp(1, 100)),
+                icon: const Icon(
+                  Icons.add_circle_outline,
+                  color: AppTheme.primaryRed,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _saving ? null : _submit,
+              child: Text(_saving ? 'Creating...' : 'Create Slot'),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
     );
   }
 }
